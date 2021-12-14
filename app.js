@@ -2,9 +2,10 @@ import express from 'express';
 import cors from 'cors';
 import axios from 'axios';
 import redis from 'redis';
+import swaggerJsDoc from 'swagger-jsdoc';
+import swaggerUi from 'swagger-ui-express';
 
 const app = express();
-const port = 5000;
 const PORT = process.env.PORT || 5000;
 const REDIS_PORT = process.env.REDIS_PORT  || 6379;
 
@@ -23,9 +24,43 @@ app.listen(PORT, () => {
     // console.log("I am live");
 });
 
-// Utility functions
-/********************************************************************************* */
-    
+// Swagger Documentation  *************************  
+const swaggerOptions = {
+    swaggerDefinition: {
+        components: {},
+        info: {
+        version: "1.0.0",
+        title: "Serach API",
+        description: "Github Serach API",
+        servers: ["http://localhost:5000"]
+        }
+    },
+    apis: ["app.js"]
+};
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     SearchQuery:
+ *       type: object
+ *       required:
+ *         - searchType
+ *         - searchBody
+ *       properties:
+ *         searchType:
+ *           type: string
+ *           description: Search Type
+ *         SearchBody:
+ *           type: string
+ *           description: Search Body
+ *       example:
+ *         searchType: users
+ *         SearchBody: john13245
+ */
+
+// Utility functions  *************************  
 async function clearCache(req, res) {
     try {
         await client.connect();
@@ -33,7 +68,7 @@ async function clearCache(req, res) {
         client.quit();
         res.send("Cache cleared succesfully").status(201);
     } catch (error) {
-        res.send({error}).status(403);
+        res.send(error).status(403);
     }
 }
 
@@ -77,16 +112,48 @@ async function getFromAPI(req, res) {
     }
 }
 
-// API routes
-/******************************************************************************* */
+
+
+// API Rtoutes  *************************  
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 app.get('/', (req, res) => {
     res.send({ response: "I am alive" }).status(201);
 });
 
+/**
+ * @swagger
+ * /search:
+ *   post:
+ *     summary: Get all search results
+ *     description: Fetch data from Github API
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SearchQuery'
+ *     responses:
+ *       201:
+ *         description: data fetched successfully
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/SearchQuery'
+ *       403:
+ *         description: error
+ */
 app.post('/search', getFromCache, getFromAPI);
 
+/**
+ * @swagger
+ * /clear-cache:
+ *   get:
+ *     summary: clear cached memory
+ *     responses:
+ *       201:
+ *         description: cahce memory cleared successfully 
+ *       403:
+ *         description: error
+ */
 app.get('/clear-cache', clearCache);
-    
-
-    
