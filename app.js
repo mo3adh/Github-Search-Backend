@@ -83,12 +83,13 @@ async function getFromCache(req, res, next) {
         if(value != null) {
             console.log("Data was found");
             client.quit();
-            return res.send(JSON.parse(value)).status(201);
+            const data = JSON.parse(value);
+            return res.send({data: data, type: searchType}).status(201);
         }
 
         console.log("Data was not found");
     } catch (error) {
-        res.send(error).status(403);
+        return res.send(error).status(403);
     }
     
     next();
@@ -106,7 +107,7 @@ async function getFromAPI(req, res) {
         client.set(key, JSON.stringify(data), 'EX', 60 * 60 * 2);
         client.quit();
 
-        res.send(data).status(201);
+        return res.send({data: data, type: searchType}).status(201);
     } catch (error) {
         res.send(error).status(403);
     }
