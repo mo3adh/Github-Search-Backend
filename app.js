@@ -101,7 +101,8 @@ async function getFromAPI(req, res) {
     const key = searchType + searchBody;
     
     try {
-        const result = await axios.get(`https://api.github.com/search/${searchType}?q=${searchBody}`);
+        const url = `https://api.github.com/search/${searchType}?q=${searchBody}`;
+        const result = await axios.get(encodeURI(url));
         const data = result.data;
 
         client.set(key, JSON.stringify(data), 'EX', 60 * 60 * 2);
